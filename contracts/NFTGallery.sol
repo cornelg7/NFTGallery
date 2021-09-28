@@ -10,6 +10,9 @@ import "hardhat/console.sol";
 import { Base64 } from "./libraries/Base64.sol";
 
 contract NFTGallery is ERC721URIStorage {
+  // Maximum number of NFTs
+  uint256 MAX_NFT_NUMBER = 15;
+
   // Magic given to us by OpenZeppelin to help us keep track of tokenIds.
   using Counters for Counters.Counter;
   Counters.Counter private _tokenIds;
@@ -21,6 +24,7 @@ contract NFTGallery is ERC721URIStorage {
   string[] firstWords = ["Bulbasaur", "Ivysaur", "Venusaur", "Charmander", "Charmeleon", "Charizard", "Squirtle", "Wartortle", "Blastoise", "Caterpie", "Metapod", "Butterfree", "Weedle", "Kakuna", "Beedrill", "Pidgey", "Pidgeotto", "Pidgeot", "Rattata", "Raticate", "Spearow", "Fearow", "Ekans", "Arbok", "Pikachu"];
   string[] secondWords = ["Is", "Has", "Says", "Gets", "Makes", "Knows", "Takes", "Sees", "Wants", "Gives", "Uses", "Finds", "Asks", "Seems", "Feels", "Tries"];
   string[] thirdWords = ["Raichu", "Sandshrew", "Sandslash", "Nidoran", "Nidorina", "Nidoqueen", "Nidorino", "Nidoking", "Clefairy", "Clefable", "Vulpix", "Ninetales", "Jigglypuff", "Wigglytuff", "Zubat", "Golbat", "Oddish", "Gloom", "Vileplume", "Paras", "Parasect", "Venonat", "Venomoth", "Diglett"];
+  event NewEpicNFTMinted(address sender, uint256 tokenId);
 
   // We need to pass the name of our NFTs token and it's symbol.
   constructor() ERC721 ("SquareNFT", "SQUARE") {
@@ -43,7 +47,7 @@ contract NFTGallery is ERC721URIStorage {
   }
 
   function pickRandomThirdWord(uint256 tokenId) public view returns (string memory) {
-    uint256 rand = random(string(abi.encodePacked("3RD_WORD", Strings.toString(tokenId))));
+    uint256 rand = random(string(abi.encodePacked("ThaRD_WORD", Strings.toString(tokenId))));
     rand = rand % thirdWords.length;
     return thirdWords[rand];
   }
@@ -52,10 +56,21 @@ contract NFTGallery is ERC721URIStorage {
       return uint256(keccak256(abi.encodePacked(input)));
   }
 
+  function getTotalNFTsMintedSoFar() public view returns (uint256) {
+    return _tokenIds.current();
+  }
+
+  function getMaxNFTsNumber() public view returns (uint256) {
+    return MAX_NFT_NUMBER;
+  }
+
   // A function our user will hit to get their NFT.
   function makeAnEpicNFT() public {
-     // Get the current tokenId, this starts at 0.
+    // Get the current tokenId, this starts at 0.
     uint256 newItemId = _tokenIds.current();
+
+    // Don't allow mining more than MAX_NFT_NUMBER NFTs
+    require(newItemId < MAX_NFT_NUMBER, "Already minted all available NFTs!");
 
     // We go and randomly grab one word from each of the three arrays.
     string memory first = pickRandomFirstWord(newItemId);
@@ -99,5 +114,8 @@ contract NFTGallery is ERC721URIStorage {
 
     // Increment the counter for when the next NFT is minted.
     _tokenIds.increment();
+
+    // Send event
+    emit NewEpicNFTMinted(msg.sender, newItemId);
   }
 }
